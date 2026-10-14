@@ -1,6 +1,6 @@
 /* =========================================================
    ENGLISH IN IRAN — SEMINAR
-   script.js — full version (ES Module)
+   script.js — full version (بدون نقشه و کره)
    ========================================================= */
 (function () {
   "use strict";
@@ -23,13 +23,9 @@
     return;
   }
 
-  const STORAGE_KEY  = "english-in-iran-slide";
-  const MAP_SLIDE    = "6";
-  const GLOBE_SLIDE  = "3";
-  const TOTAL        = slides.length;
+  const TOTAL = slides.length;
 
   let current = 0;
-  let mapInitialized = false;
   let helpOverlay = null;
 
   /* =========================================================
@@ -43,15 +39,6 @@
   function getSlideIndexByNumber(num) {
     return slides.findIndex((s) => s.getAttribute("data-slide") === String(num));
   }
-
-  function readInitialSlide() {
-  return 0;   // ✅ همیشه از اسلاید ۱ شروع کن
-}
-
-  js
-function saveSlide(index) {
-  // ✅ غیرفعال شده — دیگه اسلاید ذخیره نمی‌شه
-}
 
   /* =========================================================
      4. NAVIGATION
@@ -94,36 +81,6 @@ function saveSlide(index) {
       try {
         history.replaceState(null, "", "#" + slideNum);
       } catch (_) {}
-    }
-
-    saveSlide(current);
-
-    const newSlideNum = slides[current].getAttribute("data-slide");
-
-    // پاک کردن tooltip نقشه
-    if (newSlideNum !== MAP_SLIDE) {
-      document.querySelectorAll(".leaflet-tooltip.iran-tooltip").forEach((t) => {
-        t.remove();
-      });
-    }
-
-    // lazy-load نقشه
-    if (newSlideNum === MAP_SLIDE && !mapInitialized) {
-      initIranMap();
-    }
-
-    const mapIdx = getSlideIndexByNumber(MAP_SLIDE);
-    if (
-      !mapInitialized &&
-      mapIdx >= 0 &&
-      (index === mapIdx || index === mapIdx - 1 || index === mapIdx - 2)
-    ) {
-      setTimeout(initIranMap, 500);
-    }
-
-    // ✅ lazy-load کره سه‌بعدی در اسلاید ۳
-    if (newSlideNum === GLOBE_SLIDE) {
-      setTimeout(initThreeGlobeDeck, 100);
     }
   }
 
@@ -274,7 +231,7 @@ function saveSlide(index) {
   function isInteractiveTarget(el) {
     if (!el) return false;
     return !!el.closest(
-      "button, a, input, textarea, select, label, .leaflet-container, .controls, .globe-container"
+      "button, a, input, textarea, select, label, .controls"
     );
   }
 
@@ -505,198 +462,7 @@ function saveSlide(index) {
   }
 
   /* =========================================================
-     12. IRAN MAP
-     ========================================================= */
-     /* =========================================================
-     12.0. PRELOAD MAP ASSETS
-     ========================================================= */
-  let mapPreloaded = false;
-
-  function preloadMapAssets() {
-    if (mapPreloaded) return;
-    mapPreloaded = true;
-
-    // پیش‌بارگذاری فایل GeoJSON
-    fetch("data/iran.geojson")
-      .then((res) => res.json())
-      .then((data) => {
-        window.__iranGeoCache = data;   // کش کن
-        console.info("[Map] GeoJSON preloaded");
-      })
-      .catch((err) => {
-        console.warn("[Map] Preload failed:", err);
-      });
-
-    // پیش‌بارگذاری چند تایل نقشه (مهم‌ترین زوم‌ها برای ایران)
-    const tileUrls = [
-      "https://a.tile.openstreetmap.org/5/20/12.png",
-      "https://a.tile.openstreetmap.org/5/21/12.png",
-      "https://a.tile.openstreetmap.org/5/20/13.png",
-      "https://a.tile.openstreetmap.org/5/21/13.png",
-      "https://a.tile.openstreetmap.org/6/40/25.png",
-      "https://a.tile.openstreetmap.org/6/41/25.png",
-    ];
-    tileUrls.forEach((url) => {
-      const img = new Image();
-      img.src = url;
-    });
-  }
-  function initIranMap() {
-    if (mapInitialized) return;
-    const mapEl = document.getElementById("iranMap");
-    if (!mapEl) return;
-
-    mapInitialized = true;
-
-    if (typeof L === "undefined") {
-      showMapError(mapEl, "Map library not loaded — check your internet connection");
-      return;
-    }
-
-    let map;
-    try {
-      map = L.map("iranMap", {
-        center: [32.4279, 53.688],
-        zoom: 5,
-        zoomControl: true,
-        scrollWheelZoom: false,
-        attributionControl: true,
-        zoomSnap: 0.5,
-        worldCopyJump: true,
-        preferCanvas: true,
-      });
-    } catch (err) {
-      console.error("[Map] init failed:", err);
-      showMapError(mapEl, "Map failed to initialize");
-      return;
-    }
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
-
-    const IRAN_GEOJSON_URL = "data/iran.geojson";
-    let iranLayer = null;
-
-    fetch(IRAN_GEOJSON_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then((geoData) => {
-        iranLayer = L.geoJSON(geoData, {
-          style: {
-            color: "#8b7bb8",
-            weight: 2,
-            opacity: 0.9,
-            fillColor: "#a89acb",
-            fillOpacity: 0.22,
-            dashArray: "6 5",
-            lineCap: "round",
-            lineJoin: "round",
-          },
-          onEachFeature: (feature, layer) => {
-            layer.on({
-              mouseover: (e) => {
-                const target = e.target;
-                target.setStyle({
-                  color: "#6b5b9a",
-                  weight: 3,
-                  fillColor: "#8b7bb8",
-                  fillOpacity: 0.45,
-                  dashArray: null,
-                });
-                target.bringToFront();
-                target
-                  .bindTooltip(
-                    "<strong>Iran</strong><span>Islamic Republic of Iran</span>",
-                    {
-                      sticky: true,
-                      direction: "top",
-                      className: "iran-tooltip",
-                      offset: [0, -6],
-                    }
-                  )
-                  .openTooltip();
-              },
-              mouseout: (e) => {
-                if (iranLayer) iranLayer.resetStyle(e.target);
-              },
-              click: (e) => {
-                map.fitBounds(e.target.getBounds(), { padding: [20, 20] });
-              },
-            });
-          },
-        }).addTo(map);
-
-        const bounds = iranLayer.getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, { padding: [24, 24] });
-        }
-
-        L.circleMarker([35.6892, 51.389], {
-          radius: 6,
-          color: "#fff",
-          weight: 2,
-          fillColor: "#6b5b9a",
-          fillOpacity: 1,
-        })
-          .addTo(map)
-          .bindTooltip("Tehran", {
-            permanent: true,
-            direction: "top",
-            className: "iran-city-label",
-            offset: [0, -8],
-          });
-      })
-      .catch((err) => {
-        console.error("[Map] Iran GeoJSON load error:", err);
-        showMapError(mapEl, "Map data unavailable — please check your internet");
-      });
-
-    window.__iranMap = map;
-  }
-
-  function showMapError(el, message) {
-    el.innerHTML = `
-      <div style="
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        height:100%;padding:1.5rem;text-align:center;color:#a89fb8;gap:0.8rem;
-        font-size:0.85rem;line-height:1.6;">
-        <span>${message}</span>
-        <button type="button" id="mapRetry" style="
-          background:#6b5b9a;color:#fff;border:none;padding:0.5rem 1.1rem;
-          border-radius:10px;font-weight:700;font-size:0.8rem;cursor:pointer;">
-          Retry
-        </button>
-      </div>
-    `;
-    const retry = el.querySelector("#mapRetry");
-    if (retry) {
-      retry.addEventListener("click", () => {
-        mapInitialized = false;
-        initIranMap();
-      });
-    }
-  }
-
-  /* =========================================================
-     13. RESIZE (MAP)
-     ========================================================= */
-  let resizeTimeout = null;
-  window.addEventListener("resize", () => {
-    if (resizeTimeout) clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      if (window.__iranMap) {
-        try { window.__iranMap.invalidateSize(); } catch (_) {}
-      }
-    }, 200);
-  });
-
-  /* =========================================================
-     14. HASH CHANGE
+     12. HASH CHANGE
      ========================================================= */
   window.addEventListener("hashchange", () => {
     const hash = window.location.hash.replace("#", "").trim();
@@ -707,81 +473,12 @@ function saveSlide(index) {
   });
 
   /* =========================================================
-     15. INIT
+     13. INIT — همیشه از اسلاید ۱ شروع کن
      ========================================================= */
-  const initialIndex = readInitialSlide();
-goTo(initialIndex, { updateHash: false });
-
-/* ✅ پیش‌بارگذاری نقشه در پس‌زمینه */
-preloadMapAssets();
-  goTo(initialIndex, { updateHash: false });
+  goTo(0, { updateHash: false });
 
   /* =========================================================
-     16. 3D DOT-PATTERN GLOBE (SLIDE 3) — THREE.JS
-     ========================================================= */
-  let threeGlobeModule = null;
-  let threeGlobeInstance = null;
-  let threeGlobeInitialized = false;
-
-  async function loadThreeGlobeModule() {
-    if (threeGlobeModule) return threeGlobeModule;
-    try {
-      const mod = await import("./globe-three.js");
-      threeGlobeModule = mod;
-      return mod;
-    } catch (err) {
-      console.error("[ThreeGlobe] Failed to load module:", err);
-      throw err;
-    }
-  }
-
-  async function initThreeGlobeDeck() {
-    if (threeGlobeInitialized) return;
-
-    const container = document.getElementById("globeContainer");
-    if (!container) {
-      console.warn("[ThreeGlobe] #globeContainer not found");
-      return;
-    }
-
-    threeGlobeInitialized = true;
-
-    try {
-      const { initThreeGlobe } = await loadThreeGlobeModule();
-
-      threeGlobeInstance = initThreeGlobe(container, {
-        // ---- پترن نقطه‌ای ----
-        dotColor: "#c9bfe0",
-        dotSize: 0.014,
-        gridSize: 200,
-        threshold: 128,
-
-        // ---- اقیانوس / پس‌زمینه کره ----
-        oceanColor: "#1a1625",
-        oceanOpacity: 0.92,
-
-        // ---- چرخش ----
-        speed: 0.15,
-        tilt: 23.5,
-        stopOnHover: true,
-        dragEnabled: true,
-
-        // ---- نقشه ----
-        mapUrl: "https://unpkg.com/three-globe/example/img/earth-water.png",
-      });
-
-      window.__threeGlobe = threeGlobeInstance;
-      container.dataset.initialized = "1";
-
-      console.info("[ThreeGlobe] dot-pattern globe initialized");
-    } catch (err) {
-      threeGlobeInitialized = false;
-      console.error("[ThreeGlobe] init failed:", err);
-    }
-  }
-
-  /* =========================================================
-     17. DEBUG API
+     14. DEBUG API
      ========================================================= */
   window.__deck = {
     goTo,
@@ -790,16 +487,11 @@ preloadMapAssets();
     showHelp,
     hideHelp,
     resetPassport,
-    initMap: initIranMap,
-    initGlobe: initThreeGlobeDeck,
     get current() {
       return current;
     },
     get total() {
       return TOTAL;
-    },
-    get globe() {
-      return threeGlobeInstance;
     },
   };
 

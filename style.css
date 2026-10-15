@@ -2000,4 +2000,159 @@ h3 {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+   css
+
+/* =========================================================
+   FIX — RESPONSIVE SLIDES WITHOUT CLIPPED CONTENT
+   ========================================================= */
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.deck {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.slide {
+  inset: 0;
+  min-height: 0;
+  min-width: 0;
+  padding-top: calc(var(--topbar-h) + 2vh);
+  padding-bottom: calc(var(--footer-h) + 2vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lavender-2) transparent;
+}
+
+.slide.is-active {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: stretch;
+}
+
+.slide-inner {
+  width: 100%;
+  max-width: 1080px;
+  max-height: none;
+  min-height: min-content;
+  flex: 0 0 auto;
+  margin: auto;
+}
+
+.slide-inner > * {
+  flex-shrink: 0;
+}
+
+.slide-inner--centered {
+  align-items: center;
+}
+
+.title-hero {
+  width: 100%;
+}
+
+.topbar {
+  z-index: 100;
+}
+
+.controls {
+  z-index: 110;
+}
+
+.progress {
+  z-index: 120;
+}
+
+/* LAPTOPS */
+@media (max-height: 800px) and (min-width: 701px) {
+  .slide {
+    padding-top: calc(var(--topbar-h) + 1vh);
+    padding-bottom: calc(var(--footer-h) + 1vh);
+  }
+
+  .slide-inner {
+    gap: 0.65rem;
+  }
+
+  .slide-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .section-label {
+    margin-top: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .think,
+  .big-think,
+  .key-idea {
+    margin-top: 0.6rem;
+  }
+}
+
+/* TABLETS AND PHONES */
+@media (max-width: 700px) {
+  .slide {
+    padding:
+      calc(var(--topbar-h) + 1.2vh)
+      0.9rem
+      calc(var(--footer-h) + 1.5rem);
+  }
+
+  .slide.is-active {
+    justify-content: safe center;
+  }
+
+  .slide-inner {
+    width: 100%;
+    gap: 0.6rem;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+
+  .slide-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .section-label {
+    margin-top: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* VERY SMALL PHONES */
+@media (max-width: 400px) {
+  .slide {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .slide-inner {
+    gap: 0.5rem;
+  }
+}
+
+/* LANDSCAPE PHONES */
+@media (max-height: 500px) and (orientation: landscape) {
+  .slide {
+    padding-top: calc(var(--topbar-h) + 0.5rem);
+    padding-bottom: calc(var(--footer-h) + 0.8rem);
+  }
+
+  .slide-inner {
+    gap: 0.4rem;
+  }
 }
